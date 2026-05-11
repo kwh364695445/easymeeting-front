@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp"],
+      "env": {
+        "PLAYWRIGHT_BROWSERS_PATH": "0"
+      }
+    },
+    "code-graph-builder": {
+      "command": "npx",
+      "args": ["-y", "code-graph-builder", "--server"]
+    }
+  }
+}
