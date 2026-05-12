@@ -1,10 +1,10 @@
 /*
  * @Date: 2026-04-07 10:32:01
- * @LastEditTime: 2026-05-10 19:19:41
+ * @LastEditTime: 2026-05-11 14:44:55
  * @FilePath: \MyMeeting-Client-maind:\前端练习\vue3\easymeeting-front\src\main\ipc.js
  * @Description: 主进程中与渲染进程通信相关的事件
  */
-import { ipcMain, desktopCapturer } from 'electron'
+import { ipcMain, desktopCapturer, shell } from 'electron'
 import { getWindow } from './windowProxy'
 import { BrowserWindow } from 'electron/main'
 import { initWs } from './wsClient'
@@ -69,6 +69,7 @@ const onLoginSuccess = () => {
 }
 
 const onGetScreenSource = () => {
+  // 获取屏幕截图
   ipcMain.handle('getScreenSources', async (event, opts) => {
     const sources = await desktopCapturer.getSources(opts)
     return sources
@@ -80,7 +81,8 @@ const onGetScreenSource = () => {
         id,
         name,
         displayId: display_id,
-        thumbnail: thumbnail.toDataURL()
+        // thumbnail: thumbnail.toDataURL()
+        thumbnail: 'data:image/jpeg;base64,' + thumbnail.toJPEG(80).toString('base64')
       }))
   })
 }
@@ -94,11 +96,22 @@ const onStopRecording = () => {
   ipcMain.on('stopRecording', stopRecording)
 }
 
+const onOpenLocalPath = () => {
+  ipcMain.on('openLocalFile', (event, { localFilePath, folder = false }) => {
+    if (folder) {
+      shell.openPath(localFilePath) // 直接打开文件或文件夹
+      return
+    }
+    shell.showItemInFolder(localFilePath) // 打开文件所在目录
+  })
+}
+
 export {
   onLoginOrRegister,
   onWinTitleOp,
   onLoginSuccess,
   onGetScreenSource,
   onStartRecording,
-  onStopRecording
+  onStopRecording,
+  onOpenLocalPath
 }

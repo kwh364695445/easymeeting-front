@@ -16,7 +16,8 @@ import {
   onLoginSuccess,
   onGetScreenSource,
   onStartRecording,
-  onStopRecording
+  onStopRecording,
+  onOpenLocalPath
 } from './ipc'
 import { Menu } from 'electron/main'
 
@@ -93,6 +94,7 @@ onLoginSuccess()
 onGetScreenSource()
 onStartRecording()
 onStopRecording()
+onOpenLocalPath()
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

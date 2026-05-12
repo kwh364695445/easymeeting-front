@@ -1,6 +1,6 @@
 /*
  * @Date: 2026-04-03 20:48:45
- * @LastEditTime: 2026-05-02 12:16:53
+ * @LastEditTime: 2026-05-11 11:27:36
  * @FilePath: \MyMeeting-Client-maind:\前端练习\vue3\easymeeting-front\src\renderer\src\router\index.js
  * @Description:路由配置
  */

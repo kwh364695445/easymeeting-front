@@ -1,6 +1,6 @@
 <!--
  * @Date: 2026-05-02 14:09:50
- * @LastEditTime: 2026-05-02 20:34:17
+ * @LastEditTime: 2026-05-11 14:42:00
  * @FilePath: \MyMeeting-Client-maind:\前端练习\vue3\easymeeting-front\src\renderer\src\views\screenCapture\ScreenSelect.vue
  * @Description: 负责屏幕录制的选择
 -->
@@ -29,7 +29,8 @@ const screenDisplayId = ref('')
 
 const selectSource = (item: ScreenSource) => {
   // screenDisplayId.value = item.displayId
-  screenDisplayId.value = item.id
+  console.log(item.displayId)
+  screenDisplayId.value = item.displayId
   emit("selectScreenDisplayId", screenDisplayId.value)
 }
 
@@ -39,12 +40,13 @@ const getScreenSources = async () => {
     // types: ['screen', 'window'],
     types: ['screen'],
     thumbnailSize: {
-      width: 600,
-      height: 360
+      // width: 600,
+      // height: 360
+      width: 320,
+      height: 180
     }
   })
-  // screenDisplayId.value = screenSources.value[0].displayId
-  screenDisplayId.value = screenSources.value[0].id
+  screenDisplayId.value = screenSources.value[0].displayId
   emit("selectScreenDisplayId", screenDisplayId.value)
 }
 

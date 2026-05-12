@@ -1,8 +1,8 @@
 /*
  * @Date: 2026-05-09 18:13:22
- * @LastEditTime: 2026-05-11 09:35:46
+ * @LastEditTime: 2026-05-12 11:29:41
  * @FilePath: \MyMeeting-Client-maind:\前端练习\vue3\easymeeting-front\src\main\recording.ts
- * @Description: 使用ffmpeg进行视频转码
+ * @Description: 使用ffmpeg进行视频录制
  */
 import fs from 'fs'
 import path from 'path'
@@ -30,9 +30,11 @@ const getFFmpegPath = () => {
 
 // let sender: WebContents | null = null
 let currentTime = 0
-function getDisplayInfo(id: number) {
+function getDisplayInfo(displayId: number) {
   const displays = screen.getAllDisplays()
-  return displays.find((display) => display.id === id)
+  return displays.find((display) => {
+    return display.id == displayId
+  })
 }
 const startRecording = (sender: WebContents, displayId: number, mic: string) => {
   if (ffmpegProcess) {
@@ -46,11 +48,15 @@ const startRecording = (sender: WebContents, displayId: number, mic: string) => 
   const finalPath = tempPath.replace('_temp', '')
   // bounds: 表示整个屏幕范围,做全屏用。worksArea: 表示工作区域范围(扣除菜单栏等系统空间)，做最大化用
   const display = getDisplayInfo(displayId)
-  if (!display) return
+  if (!display) {
+    console.log('未找到指定屏幕')
+    return
+  }
   const { bounds, workArea } = display
   console.log(bounds, workArea)
   // const ffmpeg = getFFmpegPath()
 
+  // 需要自己准备的录制参数主要包括录屏起始位置、录制区域宽高、输入源(桌面或窗口)
   let args = [
     //视频输入
     '-f',
@@ -109,6 +115,7 @@ const startRecording = (sender: WebContents, displayId: number, mic: string) => 
   ]
 
   args = args.concat(otherArgs)
+  console.log('args', args)
   ffmpegProcess = spawn(getFFmpegPath(), args, {
     detached: false,
     stdio: ['pipe', 'pipe', 'pipe']
@@ -120,11 +127,13 @@ const startRecording = (sender: WebContents, displayId: number, mic: string) => 
 
     return hours * 3600 + minutes * 60 + seconds
   }
+  // 创建ffmpeg进程开始录制
   ffmpegProcess.stderr!.on('data', (data: Buffer) => {
     const msg = data.toString() //默认data输出为buffer，转为string
     console.log(`stderr: ${msg}`)
     // FFmpeg 的状态行输出通常长这样： frame= 123 fps= 30 q=28.0 size= 1200kB time=00:00:05.67 bitrate= 178.9kbits/s speed=1.01x
     const timeMatch = msg.match(/time=(\d{2}:\d{2}:\d{2}(\.\d+)?)/)
+    console.log('timeMatch', timeMatch)
     if (timeMatch && timeMatch[1]) {
       const seconds = parseTime(timeMatch[1])
       if (seconds > currentTime) {
@@ -137,29 +146,6 @@ const startRecording = (sender: WebContents, displayId: number, mic: string) => 
     console.error('ffmpeg启动失败', err.message)
     ffmpegProcess = null
   })
-
-  // 修复文件
-  // const repairVideo = (filePath: string) => {
-  //   const ffmpeg = getFFmpegPath()
-  //   const args = ['-i', filePath, filePath.replace('_temp', '')]
-
-  //   const process = spawn(ffmpeg, args, {
-  //     stdio: ['pipe', 'pipe', 'pipe'], // 捕获stdout和stderr
-  //     detached: true //创建独立进程
-  //   })
-
-  //   process.on('error', (err) => {
-  //     console.log('ffmpeg 错误', err)
-  //   })
-
-  //   process.on('exit', (code) => {
-  //     if (code === 0) {
-  //       fs.unlinkSync(filePath)
-  //       // 给渲染进程发送录制停止成功信号
-  //       sender.send('finishRecording', filePath.replace('_temp', ''))
-  //     }
-  //   })
-  // }
 
   ffmpegProcess.on('exit', (code) => {
     ffmpegProcess = null
@@ -179,26 +165,10 @@ const startRecording = (sender: WebContents, displayId: number, mic: string) => 
   })
 }
 
-// const stopRecording = () => {
-//   if (ffmpegProcess) {
-//     // 向 FFmpeg 发送 'q' 信号来优雅停止
-//     ffmpegProcess.stdin!.write('q')
 
-//     // 设置超时，如果优雅停止失败则强制终止
-//     setTimeout(() => {
-//       if (ffmpegProcess && !ffmpegProcess.killed) {
-//         console.log('停止录制超时，强制终止进程')
-//         ffmpegProcess.kill('SIGINT')
-//       }
-//     }, 5000) // 5秒超时
-//   }
-//   // if (ffmpegProcess) {
-//   //   ffmpegProcess.kill('SIGINT')
-//   // }
-// }
 const stopRecording = () => {
   if (ffmpegProcess) {
-    // 2. 关键修改：发送 'q' 指令优雅停止
+    // 2. 关键修改：发送 'q' 指令给ffmpeg，停止录制，进而也会关闭ffmpegProcess进程
     // 这会让 FFmpeg 正常写入 MP4 头部信息，解决文件损坏问题
     ffmpegProcess.stdin?.write('q')
 

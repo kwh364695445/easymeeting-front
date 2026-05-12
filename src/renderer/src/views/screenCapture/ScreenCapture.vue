@@ -1,67 +1,69 @@
 <!--
  * @Date: 2026-05-02 11:24:48
- * @LastEditTime: 2026-05-11 09:29:35
+ * @LastEditTime: 2026-05-11 14:27:27
  * @FilePath: \MyMeeting-Client-maind:\前端练习\vue3\easymeeting-front\src\renderer\src\views\screenCapture\ScreenCapture.vue
  * @Description: 进行屏幕录制，显示录制状态
 -->
-<template>
-  <Header :showButtonBorder="true"></Header>
-  <div class="screen-capture-panel body-main"">
-    <template v-if="recordStatus == 0">
-    <div class="audio-panel setting-panel">
-      <div> 录制设置 </div>
-      <div class="device-panel">
-        <div class="title device-title">音频输入</div>
-        <!-- <MicIcon v-model="micInfo" ref="micInfoRef" @click="openOrClose"></MicIcon> -->
-      </div>
-      <div class="record-btn">
-        <el-button class="btn" type="primary" size="large" @click="startRecord">开始录制</el-button>
-      </div>
-    </div>
-    <div class="video-panel screen-panel">
-      <div class="title screen-select">选择录制屏幕</div>
-      <ScreenSelect ref="screenSelectRef" @selectScreenDisplayId="screenDisplayIdHandler">
-      </ScreenSelect>
-    </div>
-</template>
-<template v-else>
-  <div class="recording-panel">
-    <div v-if="recordStatus === 1" class="status-tips">开始录制中,请稍后...</div>
-    <div v-if="recordStatus === 3" class="status-tips">停止录制中,请稍后...</div>
-    <div v-if="recordStatus === 2" class="recording-time">
-      录制中:&nbsp;&nbsp;{{ Utils.convertSecondsToHMS(recordTime, true) }}
-    </div>
 
-    <div class="record-panel" v-if="recordStatus === 2">
-      <MicIcon v-model="micInfo" ref="micInfoRef"></MicIcon>
-      <div :class="['iconfont icon-stop', recordTime < 3 ? 'stop-disable' : '']" @click="stopRecord">
-        <el-button :disabled="recordTime < 3" class="btn" type="primary" size="large">停止录制</el-button>
+<template>
+  <Header :showBottomBorder="true"></Header>
+  <div class="body-main">
+    <template v-if="recordStatus === 0">
+      <div class="setting-panel">
+        <div>录制设置</div>
+        <div class="device-panel">
+          <div class="device-title">音频输入</div>
+          <!-- <MicIcon v-model="micInfo" ref="micInfoRef" @click="openOrClose"></MicIcon> -->
+        </div>
+        <div class="record-btn">
+          <el-button class="btn" type="primary" size="large" @click="startRecord"
+            :disabled="screenDisplayId == 0">开始录制</el-button>
+        </div>
       </div>
-    </div>
-    <div v-if="recordStatus === 4">
-      <div class="file-panel">
-        <div class="file-path" :title="filePath">{{ filePath }}</div>
-        <div class="iconfont icon-folder" @click="openFile">打开文件</div>
+      <div class="screen-panel">
+        <div class="screen-select">选择录制屏幕</div>
+        <ScreenSelect ref="screenSelectRef" @selectScreenDisplayId="handleSelectScreen"></ScreenSelect>
       </div>
-      <el-button type="primary" @click="restart">
-        <span class="iconfont icon-narrow-left"></span>返回录制
-      </el-button>
-    </div>
+    </template>
+    <template v-else>
+      <div class="recording-panel">
+        <div v-if="recordStatus === 1" class="status-tips">开始录制中,请稍后...</div>
+        <div v-if="recordStatus === 3" class="status-tips">停止录制中,请稍后...</div>
+        <div v-if="recordStatus === 2" class="recording-time">
+          录制中:&nbsp;&nbsp;{{ Utils.convertSecondsToHMS(recordTime, true) }}
+        </div>
+
+        <div class="record-panel" v-if="recordStatus === 2">
+          <!-- <MicIcon v-model="micInfo" ref="micInfoRef"></MicIcon> -->
+          <div :class="['iconfont icon-stop', recordTime < 3 ? 'stop-disable' : '']" @click="stopRecord">
+            <el-button :disabled="recordTime < 3" class="btn" type="primary" size="large">停止录制</el-button>
+          </div>
+        </div>
+        <div v-if="recordStatus === 4">
+          <div class="file-panel">
+            <div class="file-path" :title="filePath">{{ filePath }}</div>
+            <div class="iconfont icon-folder" @click="openFile">打开文件</div>
+          </div>
+          <el-button type="primary" @click="restart">
+            <span class="iconfont icon-narrow-left"></span>返回录制
+          </el-button>
+        </div>
+      </div>
+    </template>
   </div>
-</template>
-</div>
 </template>
 
 <script setup lang="ts">
-import { ref, inject } from 'vue'
+import { ref, inject, onMounted } from 'vue'
 import ScreenSelect from './ScreenSelect.vue'
 
-const { Utils } = inject('utils')j
+const { Utils } = inject('utils')
 
 const { ipcRenderer } = window.electron
 // 0初始状态 1开始录制 2录制中 3停止录制中 4停止录制
 const recordStatus = ref(0)
 const startRecord = () => {
+  console.log('屏幕id', screenDisplayId.value)
   recordStatus.value = 1
   ipcRenderer.send('startRecording', {
     displayId: screenDisplayId.value,
@@ -92,8 +94,18 @@ onMounted(() => {
   listenRecordTime()
 })
 const screenDisplayId = ref(0)
-const screenDisplayIdHandler = (id: number) => {
+const handleSelectScreen = (id: number) => {
   screenDisplayId.value = id
+}
+
+const openFile = () => {
+  console.log('openFile', filePath.value)
+  ipcRenderer.send('openLocalFile', { localFilePath: filePath.value })
+}
+const restart = () => {
+  recordStatus.value = 0
+  recordTime.value = 0
+  screenDisplayId.value = 0
 }
 
 </script>
